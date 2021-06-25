@@ -25,6 +25,11 @@ class Game:
         self.enemies = []
         self.bullets = []
 
+        self.score = Score()
+
+        self.font_size = 16
+        self.my_font = pygame.font.SysFont("monospace", self.font_size)
+
     def game(self):
         while self.game_loop:
             image = pygame.transform.scale(pygame.image.load("images/space.jfif"), (self.width, self.height))
@@ -55,8 +60,36 @@ class Game:
                 bullet.act()
 
             self.player.draw()
+
+            score_text1 = self.my_font.render(f"Score = {self.score.score}", True, (8, 201, 47), (255, 255, 255))
+            score_text2 = self.my_font.render(f"Highscore = {self.score.high_score}", True, (8, 201, 47),
+                                              (255, 255, 255))
+
+            self.screen.blit(score_text1, (0, 0))
+            self.screen.blit(score_text2, (0, self.font_size))
+
             pygame.display.update()
             self.clock.tick(60)
+
+        self.score.save_highscore()
+
+
+class Score:
+    def __init__(self):
+        self.score = 0
+        self.high_score = int(open("highscore", "r").readline().rstrip("\n"))
+
+    def get_score(self):
+        return self.score
+
+    def update_score(self, value):
+        self.score += value
+        if self.score > self.high_score:
+            self.high_score = self.score
+
+    def save_highscore(self):
+        if self.score >= self.high_score:
+            open("highscore", "w").write(str(self.high_score))
 
 
 class Generator:
@@ -68,11 +101,10 @@ class Generator:
         number = random.randint(1, int(self.rate))
         if number % 11 == number % 6 == 0:
             self.game.enemies.append(AlienEasy(self.game))
-        if number % 23 == number % 9 == 0:
+        if number % 23 == number % 9 == number % 13 == 0:
             self.game.enemies.append(AlienMedium(self.game))
-        if number > 100 and number % 17 == number % 5 == 0:
+        if number > 100 and number % 17 == number % 15 == 0:
             self.game.enemies.append(AlienHard(self.game))
-        print(number)
         self.rate += 0.25
 
 
@@ -134,31 +166,32 @@ class Bullet(WorldObject):
     def check_hits(self):
         for enemy in self.game.enemies:
             if self.y <= enemy.y + self.game.actor_size and enemy.x <= self.x <= enemy.x + self.game.actor_size:
-                print("HIT")
                 enemy.lives -= 1
                 if enemy.lives == 0:
                     self.game.enemies.remove(enemy)
+                    self.game.score.update_score(enemy.initial_lives)
                 self.game.bullets.remove(self)
                 break
 
 
 class Alien(WorldObject):
 
-    def __init__(self, game, x, y, speed, lives):
-        super().__init__(game, x, y, speed)
-        self.speed_x = speed
+    def __init__(self, game, speed, lives, initial_lives=None):
+        super().__init__(game, random.randint(0, game.width - game.actor_size),
+                         random.randint(0, math.ceil(game.height * 0.05)), speed)
+
+        self.initial_lives = lives if initial_lives is None else initial_lives
         self.lives = lives
 
     def move(self):
-        if not (0 <= self.x + self.speed <= self.game.width):
-            self.speed_x *= -1
-            self.y += self.speed
-        self.x += self.speed_x
+        if not (0 <= self.x + self.speed <= self.game.width - self.game.actor_size):
+            self.speed *= -1
+            self.y += self.game.actor_size
+        self.x += self.speed
 
     def check_for_collision_with_player(self):
         if math.sqrt((self.x - self.game.player.x) ** 2 + (self.y - self.game.player.y) ** 2) < \
                 math.sqrt(self.game.actor_size ** 2 + self.game.actor_size):
-
             self.game.game_loop = False
             print("GAME OVER")
 
@@ -167,8 +200,7 @@ class AlienHard(Alien):
     images = [pygame.image.load(f"images/alienHARD_{i}.png") for i in range(1, 11)]
 
     def __init__(self, game):
-        super().__init__(game, random.randint(0, game.width), random.randint(0, math.ceil(game.height * 0.05)),
-                         game.actor_base_speed * random.randint(1, 3), 10)
+        super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1.3), 10)
 
     def act(self):
         self.move()
@@ -187,8 +219,7 @@ class AlienMedium(Alien):
     images = [pygame.image.load(f"images/alienMEDIUM_{i}.png") for i in range(1, 7)]
 
     def __init__(self, game):
-        super().__init__(game, random.randint(0, game.width), random.randint(0, math.ceil(game.height * 0.05)),
-                         game.actor_base_speed * random.randint(1, 2), 6)
+        super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1.2), 6)
 
     def act(self):
         self.move()
@@ -207,8 +238,7 @@ class AlienEasy(Alien):
     images = [pygame.image.load(f"images/alienEASY_{i}.png") for i in range(1, 4)]
 
     def __init__(self, game):
-        super().__init__(game, random.randint(0, game.width), random.randint(0, math.ceil(game.height * 0.05)),
-                         game.actor_base_speed * random.randint(1, 2), 3)
+        super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1), 3)
 
     def act(self):
         self.move()
