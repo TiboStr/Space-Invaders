@@ -101,7 +101,7 @@ class Generator:
         number = random.randint(1, int(self.rate))
         if number % 11 == number % 6 == 0:
             self.game.enemies.append(AlienEasy(self.game))
-        if number % 23 == number % 9 == number % 13 == 0:
+        if number % 23 == number % 9 == 0:
             self.game.enemies.append(AlienMedium(self.game))
         if number > 100 and number % 17 == number % 15 == 0:
             self.game.enemies.append(AlienHard(self.game))
