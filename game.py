@@ -22,7 +22,7 @@ class Game:
         self.generator = Generator(self)
 
         self.game_loop = True
-        self.enemies = []
+        self.enemies = [AlienEasy(self)]
         self.bullets = []
 
         self.score = Score()
