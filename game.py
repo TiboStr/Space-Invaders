@@ -10,14 +10,19 @@ class Game:
         pygame.init()
         pygame.display.set_caption("  Space Invaders")
         pygame.display.set_icon(pygame.image.load("images/icon.png"))
-        self.screen = pygame.display.set_mode((width, height))
+
+        # https://www.reddit.com/r/pygame/comments/m2fv0h/survey_does_this_pygame_code_jitter_for_you_what/gqjgf6p?utm_source=share&utm_medium=web2x&context=3
+        self.screen = pygame.display.set_mode(
+            (width, height), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.SCALED, vsync=1)
+
         self.width = width
         self.height = height
         self.clock = pygame.time.Clock()
 
         self.actor_size = int(width / 20)
         self.actor_base_speed = width / 300
-        self.player = Player(self, self.width / 2, self.height * 0.85, self.actor_base_speed)
+        self.player = Player(self, self.width / 2,
+                             self.height * 0.85, self.actor_base_speed)
 
         self.generator = Generator(self)
 
@@ -31,8 +36,9 @@ class Game:
         self.my_font = pygame.font.SysFont("monospace", self.font_size)
 
     def game(self):
+        image = pygame.transform.scale(pygame.image.load(
+            "images/space.jfif"), (self.width, self.height))
         while self.game_loop:
-            image = pygame.transform.scale(pygame.image.load("images/space.jfif"), (self.width, self.height))
             self.screen.blit(image, (0, 0))
 
             self.generator.generate_enemies()
@@ -61,7 +67,8 @@ class Game:
 
             self.player.draw()
 
-            score_text1 = self.my_font.render(f"Score = {self.score.score}", True, (8, 201, 47), (255, 255, 255))
+            score_text1 = self.my_font.render(
+                f"Score = {self.score.score}", True, (8, 201, 47), (255, 255, 255))
             score_text2 = self.my_font.render(f"Highscore = {self.score.high_score}", True, (8, 201, 47),
                                               (255, 255, 255))
 
@@ -133,10 +140,12 @@ class Player(WorldObject):
         self.x -= self.speed if self.x - self.speed >= 0 else self.x
 
     def move_right(self):
-        self.x = self.x + self.speed if self.x + self.speed <= self.game.width - self.game.actor_size else self.x
+        self.x = self.x + self.speed if self.x + \
+            self.speed <= self.game.width - self.game.actor_size else self.x
 
     def move_down(self):
-        self.y = self.y + self.speed if self.y + self.speed <= self.game.height - self.game.actor_size else self.y
+        self.y = self.y + self.speed if self.y + \
+            self.speed <= self.game.height - self.game.actor_size else self.y
 
     def move_up(self):
         self.y -= self.speed if self.y - self.speed >= 0 else self.y
@@ -161,7 +170,8 @@ class Bullet(WorldObject):
             self.game.bullets.remove(self)
 
     def draw(self):
-        pygame.draw.rect(self.game.screen, (255, 0, 0), pygame.Rect(self.x, self.y, self.width, self.height))
+        pygame.draw.rect(self.game.screen, (255, 0, 0), pygame.Rect(
+            self.x, self.y, self.width, self.height))
 
     def check_hits(self):
         for enemy in self.game.enemies:
@@ -197,7 +207,8 @@ class Alien(WorldObject):
 
 
 class AlienHard(Alien):
-    images = [pygame.image.load(f"images/alienHARD_{i}.png") for i in range(1, 11)]
+    images = [pygame.image.load(
+        f"images/alienHARD_{i}.png") for i in range(1, 11)]
 
     def __init__(self, game):
         super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1.3), 10)
@@ -216,7 +227,8 @@ class AlienHard(Alien):
 
 
 class AlienMedium(Alien):
-    images = [pygame.image.load(f"images/alienMEDIUM_{i}.png") for i in range(1, 7)]
+    images = [pygame.image.load(
+        f"images/alienMEDIUM_{i}.png") for i in range(1, 7)]
 
     def __init__(self, game):
         super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1.2), 6)
@@ -235,7 +247,8 @@ class AlienMedium(Alien):
 
 
 class AlienEasy(Alien):
-    images = [pygame.image.load(f"images/alienEASY_{i}.png") for i in range(1, 4)]
+    images = [pygame.image.load(
+        f"images/alienEASY_{i}.png") for i in range(1, 4)]
 
     def __init__(self, game):
         super().__init__(game, game.actor_base_speed * random.uniform(0.1, 1), 3)
